@@ -9,6 +9,25 @@ const route = useRoute();
 const router = useRouter();
 
 const productId = ref(route.params.productId);
+const product = ref(null);
+
+const fetchProduct = async () => {
+  try {
+    const response = await fetch(
+      `http://localhost:3000/api/products/${productId.value}`,
+    );
+    if (!response.ok) {
+      throw new Error("Réponse du serveur non valide");
+    }
+    const data = await response.json();
+    product.value = data;
+    console.log(data);
+  } catch (error) {
+    console.error("Erreur lors de la récupération du produit:", error);
+  }
+};
+
+fetchProduct();
 
 /**
  * @param {number|string|Date|VarDate} date
@@ -30,11 +49,11 @@ function formatDate(date) {
     <div class="alert alert-danger mt-4" role="alert" data-test-error>
       Une erreur est survenue lors du chargement des produits.
     </div>
-    <div class="row" data-test-product>
+    <div v-if="product" class="row" data-test-product>
       <!-- Colonne de gauche : image et compte à rebours -->
       <div class="col-lg-4">
         <img
-          src="https://picsum.photos/id/250/512/512"
+          :src="product.pictureUrl"
           alt=""
           class="img-fluid rounded mb-3"
           data-test-product-picture
@@ -56,7 +75,7 @@ function formatDate(date) {
         <div class="row">
           <div class="col-lg-6">
             <h1 class="mb-3" data-test-product-name>
-              Appareil photo argentique
+              {{ product.name }}
             </h1>
           </div>
           <div class="col-lg-6 text-end">
@@ -76,21 +95,24 @@ function formatDate(date) {
 
         <h2 class="mb-3">Description</h2>
         <p data-test-product-description>
-          Appareil photo argentique classique, parfait pour les amateurs de
-          photographie
+          {{ product.description }}
         </p>
 
         <h2 class="mb-3">Informations sur l'enchère</h2>
         <ul>
-          <li data-test-product-price>Prix de départ : 17 €</li>
-          <li data-test-product-end-date>Date de fin : 20 juin 2026</li>
+          <li data-test-product-price>
+            Prix de départ : {{ product.originalPrice }} €
+          </li>
+          <li data-test-product-end-date>
+            Date de fin : {{ formatDate(product.endDate) }}
+          </li>
           <li>
             Vendeur :
             <router-link
               :to="{ name: 'User', params: { userId: 'TODO' } }"
               data-test-product-seller
             >
-              alice
+              {{ product.sellerId }}
             </router-link>
           </li>
         </ul>
