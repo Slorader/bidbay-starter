@@ -10,21 +10,28 @@ router.get('/api/products', async (req, res, next) => {
 })
 
 router.get('/api/products/:productId', async (req, res) => {
-  const { productId } = req.params
-
   try {
-    const product = await Product.findOne({
-      where: { id: productId }
+    const product = await Product.findByPk(req.params.productId, {
+      include: [{
+        model: User,
+        as: 'seller'
+      }, {
+        model: Bid,
+        as: 'bids',
+        include: {
+          model: User,
+          as: 'bidder'
+        }
+      }]
     })
-
     if (!product) {
-      return res.status(404).json({ message: 'Produit non trouvé' })
+      res.status(404).json({ error: 'Product not found' })
+    } else {
+      res.status(200).json(product)
     }
-
-    res.status(200).json(product)
-  } catch (e) {
-    console.log(e)
-    res.status(500)
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: 'Internal Server Error' })
   }
 })
 

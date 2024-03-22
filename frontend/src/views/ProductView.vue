@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, watchEffect } from "vue";
 import { useRoute, useRouter, RouterLink } from "vue-router";
 import { useAuthStore } from "../store/auth";
 
@@ -9,26 +9,80 @@ const route = useRoute();
 const router = useRouter();
 
 const productId = ref(route.params.productId);
-const product = ref(null);
+const product = ref();
+const loading = ref(true);
+const error = ref(false);
+const isOwner = ref(false);
+const price = ref(0);
 
-const fetchProduct = async () => {
+async function fetchProduct() {
   try {
     const response = await fetch(
       `http://localhost:3000/api/products/${productId.value}`,
     );
-    if (!response.ok) {
-      throw new Error("Réponse du serveur non valide");
+    if (response.ok) {
+      const data = await response.json();
+      product.value = data;
+      loading.value = false;
+      error.value = false;
+      if (
+        isAuthenticated.value &&
+        userData.value.id === product.value.sellerId
+      ) {
+        isOwner.value = true;
+      }
+    } else if (response.status === 404) {
+      error.value = true;
+      errorMessage.value = "Product not found";
+      loading.value = false;
+    } else {
+      error.value = true;
+      loading.value = false;
     }
-    const data = await response.json();
-    product.value = data;
-    console.log(data);
-  } catch (error) {
-    console.error("Erreur lors de la récupération du produit:", error);
+  } catch (e) {
+    console.error(e);
+    error.value = true;
+    loading.value = false;
   }
-};
+}
+
+async function addBid() {
+  try {
+    const res = await fetch(
+      `http://localhost:3000/api/products/${productId.value}/bids`,
+      {
+        method: "POST",
+        body: JSON.stringify({ price: price.value }),
+        headers: {
+          Authorization: `Bearer ${token.value}`,
+          "Content-Type": "application/json",
+        },
+      },
+    );
+    fetchProduct();
+  } catch (e) {
+    error.value = true;
+  }
+}
+
+const countdown = computed(() => {
+  const end = new Date(product.value.endDate);
+  const now = new Date();
+  const diff = end.getTime() - now.getTime();
+
+  if (diff <= 0) {
+    return "Terminé";
+  }
+
+  const seconds = Math.floor(diff / 1000) % 60;
+  const minutes = Math.floor(diff / 1000 / 60) % 60;
+  const hours = Math.floor(diff / 1000 / 60 / 60) % 24;
+  const days = Math.floor(diff / 1000 / 60 / 60 / 24);
+
+  return `${days}j ${hours}h ${minutes}min ${seconds}s`;
+});
 
 fetchProduct();
-
 /**
  * @param {number|string|Date|VarDate} date
  */
@@ -80,7 +134,10 @@ function formatDate(date) {
           </div>
           <div class="col-lg-6 text-end">
             <RouterLink
-              :to="{ name: 'ProductEdition', params: { productId: 'TODO' } }"
+              :to="{
+                name: 'ProductEdition',
+                params: { productId: product.id },
+              }"
               class="btn btn-primary"
               data-test-edit-product
             >
@@ -109,10 +166,10 @@ function formatDate(date) {
           <li>
             Vendeur :
             <router-link
-              :to="{ name: 'User', params: { userId: 'TODO' } }"
+              :to="{ name: 'User', params: { userId: product.sellerId } }"
               data-test-product-seller
             >
-              {{ product.sellerId }}
+              {{ product.seller.username }}
             </router-link>
           </li>
         </ul>
