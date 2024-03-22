@@ -46,7 +46,26 @@ router.put('/api/products/:productId', async (req, res) => {
 })
 
 router.delete('/api/products/:productId', async (req, res) => {
-  res.status(600).send()
+  try {
+    const productId = req.params.productId
+    const product = await Product.findOne(productId)
+
+    if (!product) {
+      return res.status(404).json({ error: 'Produit non trouvé' })
+    }
+
+    const hasPermission = req.user.admin === true || product.sellerId === req.user.id
+    if (!hasPermission) {
+      return res.status(403).json({ error: 'L\'utilisateur n\'a pas la permission' })
+    }
+
+    await product.destroy()
+
+    return res.status(204).send()
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: 'Internal Server Error' })
+  }
 })
 
 export default router

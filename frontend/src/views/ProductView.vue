@@ -13,9 +13,10 @@ const product = ref();
 const loading = ref(true);
 const error = ref(false);
 const isOwner = ref(false);
-const price = ref(0);
 
 async function fetchProduct() {
+  error.value = false;
+  loading.value = true;
   try {
     const response = await fetch(
       `http://localhost:3000/api/products/${productId.value}`,
@@ -33,7 +34,6 @@ async function fetchProduct() {
       }
     } else if (response.status === 404) {
       error.value = true;
-      errorMessage.value = "Product not found";
       loading.value = false;
     } else {
       error.value = true;
@@ -46,22 +46,22 @@ async function fetchProduct() {
   }
 }
 
-async function addBid() {
+async function deleteProduct(productId) {
+  error.value = false;
+  loading.value = true;
   try {
-    const res = await fetch(
-      `http://localhost:3000/api/products/${productId.value}/bids`,
-      {
-        method: "POST",
-        body: JSON.stringify({ price: price.value }),
-        headers: {
-          Authorization: `Bearer ${token.value}`,
-          "Content-Type": "application/json",
-        },
+    await fetch(`http://localhost:3000/api/products/${productId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token.value}`,
       },
-    );
-    fetchProduct();
+    });
+    await router.push({
+      name: "Home",
+    });
   } catch (e) {
     error.value = true;
+    loading.value = false;
   }
 }
 
@@ -94,13 +94,18 @@ function formatDate(date) {
 
 <template>
   <div class="row">
-    <div class="text-center mt-4" data-test-loading>
+    <div v-if="loading" class="text-center mt-4" data-test-loading>
       <div class="spinner-border" role="status">
         <span class="visually-hidden">Chargement...</span>
       </div>
     </div>
 
-    <div class="alert alert-danger mt-4" role="alert" data-test-error>
+    <div
+      v-if="error"
+      class="alert alert-danger mt-4"
+      role="alert"
+      data-test-error
+    >
       Une erreur est survenue lors du chargement des produits.
     </div>
     <div v-if="product" class="row" data-test-product>
@@ -144,7 +149,11 @@ function formatDate(date) {
               Editer
             </RouterLink>
             &nbsp;
-            <button class="btn btn-danger" data-test-delete-product>
+            <button
+              class="btn btn-danger"
+              @click.prevent="deleteProduct(product.id)"
+              data-test-delete-product
+            >
               Supprimer
             </button>
           </div>
