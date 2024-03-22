@@ -4,6 +4,7 @@ import { ref, computed } from "vue";
 const loading = ref(false);
 const error = ref(false);
 const products = ref([]);
+const searchTerm = ref("");
 
 async function fetchProducts() {
   loading.value = true;
@@ -25,6 +26,12 @@ async function fetchProducts() {
   }
 }
 fetchProducts();
+
+const filteredProducts = computed(() => {
+  return products.value.filter((product) => {
+    return product.name.toLowerCase().includes(searchTerm.value.toLowerCase());
+  });
+});
 </script>
 
 <template>
@@ -33,7 +40,7 @@ fetchProducts();
 
     <div class="row mb-3">
       <div class="col-md-6">
-        <form>
+        <form @submit.prevent="searchProduct">
           <div class="input-group">
             <span class="input-group-text">Filtrage</span>
             <input
@@ -41,6 +48,7 @@ fetchProducts();
               class="form-control"
               placeholder="Filtrer par nom"
               data-test-filter
+              v-model="searchTerm"
             />
           </div>
         </form>
@@ -88,7 +96,7 @@ fetchProducts();
     <div class="row">
       <div
         class="col-md-4 mb-4"
-        v-for="product in products"
+        v-for="product in filteredProducts"
         :key="product.id"
         data-test-product
       >
