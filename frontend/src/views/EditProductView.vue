@@ -91,15 +91,12 @@ async function editProduct() {
 
 function verifyOwner() {
   const user = product.value.seller;
-  console.log(useAuthStore().userData);
   if (
     useAuthStore().userData.value.id === user.id ||
     useAuthStore().userData.value.admin === true
   ) {
-    console.log("je peux édit !");
     disabled.value = false;
   } else {
-    console.log("je ne peux pas édit !");
     disabled.value = true;
   }
 }

@@ -94,13 +94,18 @@ function formatDate(date) {
 
 <template>
   <div class="row">
-    <div class="text-center mt-4" data-test-loading>
+    <div class="text-center mt-4" v-if="loading" data-test-loading>
       <div class="spinner-border" role="status">
         <span class="visually-hidden">Chargement...</span>
       </div>
     </div>
 
-    <div class="alert alert-danger mt-4" role="alert" data-test-error>
+    <div
+      class="alert alert-danger mt-4"
+      role="alert"
+      v-if="error"
+      data-test-error
+    >
       Une erreur est survenue lors du chargement des produits.
     </div>
     <div v-if="product" class="row" data-test-product>
