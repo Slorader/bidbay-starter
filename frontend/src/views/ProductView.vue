@@ -14,6 +14,31 @@ const loading = ref(true);
 const error = ref(false);
 const isOwner = ref(false);
 const price = ref(0);
+const bids = ref([]);
+const noBids = ref(true);
+const showOffer = ref(false);
+const deleteBtn = ref(false);
+
+function verifyShowOffer() {
+  const user = product.value.seller;
+  if (useAuthStore().userData.value.id === user.id) {
+    showOffer.value = false;
+  } else {
+    showOffer.value = true;
+  }
+}
+
+function verifyBtnDelete() {
+  const user = product.value.seller;
+  if (
+    useAuthStore().userData.value.id === user.id ||
+    useAuthStore().userData.value.admin === true
+  ) {
+    deleteBtn.value = true;
+  } else {
+    deleteBtn.value = false;
+  }
+}
 
 async function fetchProduct() {
   try {
@@ -23,8 +48,14 @@ async function fetchProduct() {
     if (response.ok) {
       const data = await response.json();
       product.value = data;
+      bids.value = product.value.bids;
+      if (bids.value.length > 0) {
+        noBids.value = false;
+      }
       loading.value = false;
       error.value = false;
+      verifyShowOffer();
+      verifyBtnDelete();
       if (
         isAuthenticated.value &&
         userData.value.id === product.value.sellerId
@@ -33,7 +64,6 @@ async function fetchProduct() {
       }
     } else if (response.status === 404) {
       error.value = true;
-      errorMessage.value = "Product not found";
       loading.value = false;
     } else {
       error.value = true;
@@ -190,28 +220,34 @@ function formatDate(date) {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="i in 10" :key="i" data-test-bid>
+            <tr v-for="bid in bids.values()" :key="bid.id" data-test-bid>
               <td>
                 <router-link
-                  :to="{ name: 'User', params: { userId: 'TODO' } }"
+                  :to="{ name: 'User', params: { userId: bid.bidder.id } }"
                   data-test-bid-bidder
                 >
-                  charly
+                  {{ bid.bidder.username }}
                 </router-link>
               </td>
-              <td data-test-bid-price>43 €</td>
-              <td data-test-bid-date>22 mars 2026</td>
+              <td data-test-bid-price>{{ bid.price }} €</td>
+              <td data-test-bid-date>
+                {{ new Date(bid.date).toLocaleDateString() }}
+              </td>
               <td>
-                <button class="btn btn-danger btn-sm" data-test-delete-bid>
+                <button
+                  v-if="deleteBtn"
+                  class="btn btn-danger btn-sm"
+                  data-test-delete-bid
+                >
                   Supprimer
                 </button>
               </td>
             </tr>
           </tbody>
         </table>
-        <p data-test-no-bids>Aucune offre pour le moment</p>
+        <p v-if="noBids" data-test-no-bids>Aucune offre pour le moment</p>
 
-        <form data-test-bid-form>
+        <form v-if="showOffer" data-test-bid-form>
           <div class="form-group">
             <label for="bidAmount">Votre offre :</label>
             <input
