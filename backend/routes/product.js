@@ -56,18 +56,23 @@ router.put('/api/products/:productId', async (req, res) => {
   res.status(600).send()
 })
 
-router.delete('/api/products/:productId', async (req, res) => {
+router.delete('/api/products/:productId', authMiddleware, async (req, res) => {
   try {
     const productId = req.params.productId
-    const product = await Product.findOne(productId)
+    const product = await Product.findByPk(productId)
 
     if (!product) {
-      return res.status(404).json({ error: 'Produit non trouvé' })
+      res.status(404).json({
+        error: 'Product not found'
+      })
+      return
     }
 
-    const hasPermission = req.user.admin === true || product.sellerId === req.user.id
-    if (!hasPermission) {
-      return res.status(403).json({ error: 'L\'utilisateur n\'a pas la permission' })
+    if ((product.sellerId !== req.user.id) && !req.user.admin) {
+      res.status(403).json({
+        error: 'User not granted'
+      })
+      return
     }
 
     await product.destroy()

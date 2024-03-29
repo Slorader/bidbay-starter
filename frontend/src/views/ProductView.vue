@@ -56,11 +56,9 @@ async function deleteProduct(productId) {
         Authorization: `Bearer ${token.value}`,
       },
     });
-    await router.push({
-      name: "Home",
-    });
   } catch (e) {
     error.value = true;
+  } finally {
     loading.value = false;
   }
 }
@@ -149,11 +147,7 @@ function formatDate(date) {
               Editer
             </RouterLink>
             &nbsp;
-            <button
-              class="btn btn-danger"
-              @click.prevent="deleteProduct(product.id)"
-              data-test-delete-product
-            >
+            <button class="btn btn-danger" data-test-delete-product @click.prevent="deleteProduct(product.id)">
               Supprimer
             </button>
           </div>
