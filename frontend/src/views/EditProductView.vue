@@ -10,6 +10,15 @@ const loading = ref(false);
 const error = ref(false);
 const product = ref("");
 
+const productName = ref("");
+const productDescription = ref("");
+const productPictureUrl = ref("");
+const productCategory = ref("");
+const productOriginalPrice = ref("");
+const productEndDate = ref("");
+
+const disabled = ref(true);
+
 if (!isAuthenticated.value) {
   router.push({ name: "Login" });
 }
@@ -28,10 +37,14 @@ async function fetchProduct() {
       throw new Error("Erreur lors de la récupération des produits");
     }
     product.value = await response.json();
-    console.log(product.value);
-    product.value.endDate = new Date(product.value.endDate)
-      .toISOString()
-      .split("T")[0];
+    productName.value = product.value.name;
+    productDescription.value = product.value.description;
+    productCategory.value = product.value.category;
+    productOriginalPrice.value = product.value.originalPrice;
+    productPictureUrl.value = product.value.pictureUrl;
+    let date = new Date(product.value.endDate).toISOString().split("T")[0];
+    productEndDate.value = date.replaceAll("/", "-");
+    verifyOwner();
   } catch (e) {
     console.error("Erreur lors de la récupération du produit:", e);
     error.value = true;
@@ -40,6 +53,56 @@ async function fetchProduct() {
   }
 }
 fetchProduct();
+
+async function editProduct() {
+  loading.value = true;
+  try {
+    let response = await fetch(
+      "http://localhost:3000/api/products/" + productId.value,
+      {
+        method: "PUT",
+        headers: {
+          authorization: `Bearer ${token.value}`,
+          "Content-Type": "application/json",
+          accept: "application/json",
+        },
+        body: JSON.stringify({
+          name: productName.value,
+          description: productDescription.value,
+          pictureUrl: productPictureUrl.value,
+          category: productCategory.value,
+          originalPrice: productOriginalPrice.value,
+          endDate: productEndDate.value,
+        }),
+      },
+    );
+    if (response.ok) {
+      let product = await response.json();
+      router.push({ name: "Product", params: { productId: product.id } });
+    } else {
+      error.value = true;
+    }
+  } catch (e) {
+    error.value = true;
+  } finally {
+    loading.value = false;
+  }
+}
+
+function verifyOwner() {
+  const user = product.value.seller;
+  console.log(useAuthStore().userData);
+  if (
+    useAuthStore().userData.value.id === user.id ||
+    useAuthStore().userData.value.admin === true
+  ) {
+    console.log("je peux édit !");
+    disabled.value = false;
+  } else {
+    console.log("je ne peux pas édit !");
+    disabled.value = true;
+  }
+}
 </script>
 
 <template>
@@ -47,7 +110,7 @@ fetchProduct();
 
   <div class="row justify-content-center">
     <div class="col-md-6">
-      <form>
+      <form @submit.prevent="editProduct()">
         <div
           v-if="error"
           class="alert alert-danger mt-4"
@@ -64,8 +127,8 @@ fetchProduct();
             class="form-control"
             id="product-name"
             required
+            v-model="productName"
             data-test-product-name
-            v-model="product.name"
           />
         </div>
 
@@ -77,10 +140,10 @@ fetchProduct();
             class="form-control"
             id="product-description"
             name="description"
+            v-model="productDescription"
             rows="3"
             required
             data-test-product-description
-            v-model="product.description"
           ></textarea>
         </div>
 
@@ -90,9 +153,9 @@ fetchProduct();
             type="text"
             class="form-control"
             id="product-category"
+            v-model="productCategory"
             required
             data-test-product-category
-            v-model="product.category"
           />
         </div>
 
@@ -106,11 +169,11 @@ fetchProduct();
               class="form-control"
               id="product-original-price"
               name="originalPrice"
+              v-model="productOriginalPrice"
               step="1"
               min="0"
               required
               data-test-product-price
-              v-model="product.originalPrice"
             />
             <span class="input-group-text">€</span>
           </div>
@@ -124,10 +187,10 @@ fetchProduct();
             type="url"
             class="form-control"
             id="product-picture-url"
+            v-model="productPictureUrl"
             name="pictureUrl"
             required
             data-test-product-picture
-            v-model="product.pictureUrl"
           />
         </div>
 
@@ -139,15 +202,21 @@ fetchProduct();
             type="date"
             class="form-control"
             id="product-end-date"
+            v-model="productEndDate"
             name="endDate"
             required
             data-test-product-end-date
-            v-model="product.endDate"
           />
         </div>
 
         <div class="d-grid gap-2">
-          <button type="submit" class="btn btn-primary" data-test-submit>
+          <button
+            type="submit"
+            class="btn btn-primary"
+            data-test-submit
+            :disabled="disabled"
+            @click="updateProduct(productId)"
+          >
             Modifier le produit
             <span
               v-if="loading"
