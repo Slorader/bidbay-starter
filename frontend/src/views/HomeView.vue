@@ -5,6 +5,7 @@ const loading = ref(false);
 const error = ref(false);
 const products = ref([]);
 const searchTerm = ref("");
+const sortBy = ref("name");
 
 async function fetchProducts() {
   loading.value = true;
@@ -32,6 +33,14 @@ const filteredProducts = computed(() => {
     return product.name.toLowerCase().includes(searchTerm.value.toLowerCase());
   });
 });
+
+const sortProducts = () => {
+  if (sortBy.value === "name") {
+    products.value.sort((a, b) => a.name.localeCompare(b.name));
+  } else if (sortBy.value === "price") {
+    products.value.sort((a, b) => a.originalPrice - b.originalPrice);
+  }
+};
 </script>
 
 <template>
@@ -62,14 +71,30 @@ const filteredProducts = computed(() => {
             aria-expanded="false"
             data-test-sorter
           >
-            Trier par nom
+            Trier par {{ sortBy === "name" ? "nom" : "prix" }}
           </button>
           <ul class="dropdown-menu dropdown-menu-end">
             <li>
-              <a class="dropdown-item" href="#"> Nom </a>
+              <a
+                class="dropdown-item"
+                href="#"
+                @click="
+                  sortBy = 'name';
+                  sortProducts();
+                "
+              >
+                Nom
+              </a>
             </li>
             <li>
-              <a class="dropdown-item" href="#" data-test-sorter-price>
+              <a
+                class="dropdown-item"
+                href="#"
+                @click="
+                  sortBy = 'price';
+                  sortProducts();
+                "
+              >
                 Prix
               </a>
             </li>
