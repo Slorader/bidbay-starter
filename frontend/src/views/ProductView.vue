@@ -56,6 +56,9 @@ async function deleteProduct(productId) {
         Authorization: `Bearer ${token.value}`,
       },
     });
+    await router.push({
+      name: "Home",
+    });
   } catch (e) {
     error.value = true;
   } finally {
