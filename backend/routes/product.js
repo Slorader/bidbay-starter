@@ -6,7 +6,18 @@ import { getDetails } from '../validators/index.js'
 const router = express.Router()
 
 router.get('/api/products', async (req, res, next) => {
-  res.status(600).send()
+  try {
+    const products = await Product.findAll({
+      include: [{
+        model: User,
+        as: 'seller'
+      }]
+    })
+    res.status(200).json(products)
+  } catch (error) {
+    console.error('Erreur lors de la récupération des produits :', error)
+    res.status(500).json({ error: 'Erreur lors de la récupération des produits' })
+  }
 })
 
 router.get('/api/products/:productId', async (req, res) => {
