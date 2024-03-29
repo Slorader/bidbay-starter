@@ -76,6 +76,26 @@ async function fetchProduct() {
   }
 }
 
+async function deleteBids(bidId) {
+  error.value = false;
+  loading.value = true;
+  try {
+    await fetch(`http://localhost:3000/api/bids/${bidId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token.value}`,
+      },
+    });
+    await router.push({
+      name: "Home",
+    });
+  } catch (e) {
+    error.value = true;
+  } finally {
+    loading.value = false;
+  }
+}
+
 async function addBid() {
   try {
     const res = await fetch(
@@ -238,6 +258,7 @@ function formatDate(date) {
                   v-if="deleteBtn"
                   class="btn btn-danger btn-sm"
                   data-test-delete-bid
+                  @click="deleteBids(bid.id)"
                 >
                   Supprimer
                 </button>
