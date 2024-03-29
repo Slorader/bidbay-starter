@@ -48,8 +48,28 @@ router.get('/api/products/:productId', async (req, res) => {
 
 // You can use the authMiddleware with req.user.id to authenticate your endpoint ;)
 
-router.post('/api/products', (req, res) => {
-  res.status(600).send()
+router.post('/api/products', authMiddleware, async (req, res) => {
+
+  const { name, description, pictureUrl, category, originalPrice, endDate } = req.body;
+
+  try {
+    let product = await Product.create({
+      name,
+      description,
+      pictureUrl,
+      category,
+      originalPrice,
+      endDate,
+      sellerId: req.user.id
+    })
+
+    res.status(201).json(product)
+  } catch (e) {
+    res.status(400).json({
+      'error': 'Invalid or missing fields',
+      'details': getDetails(e)
+    })
+  }
 })
 
 router.put('/api/products/:productId', async (req, res) => {
