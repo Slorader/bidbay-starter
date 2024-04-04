@@ -758,15 +758,6 @@ Le but principal du projet est d'implémenter un maximum de fonctionnalité afin
 
 Voilà une suggestion de roadmap pour développer ce projet.
 
-- Remplir vos noms, prénoms et numéro d'étudiants dans le fichier authors.js
-
-- Implémenter l'API `GET /api/products`
-	
-- Implémenter la page racine qui liste les produits `/`
-    > Lister les produits (nom (lien vers `/products/:productId`), description, photo, vendeur (lien vers `/users/:userId`), prix actuel) depuis `GET /api/products`
-    > Filtrer une liste de produit (par nom)
-    > Trier une liste de produit (par nom, par prix)
-
 - Implémenter l'API `POST /api/products/`
 
 - Implémenter la page d'ajout d'un produit `/products/add`
@@ -775,16 +766,8 @@ Voilà une suggestion de roadmap pour développer ce projet.
     > Enregistrer via `POST /api/products/` 
     > Gérer message d'erreur
     > Rediriger sur la page du produit après ajout
+  
 
-- Implémenter l'API `GET /api/products/:productId`
-
-
-- Implémenter l'affichage des infos d'un produit spécifiques `/products/:productId`
-	> Afficher les informations détaillées d'un produit spécifique (nom, description, photo, prix de départ, date de début et de fin de l'enchère, vendeur (lien vers `/users/:userId`)) via `GET /api/products/:productId`
-	> Afficher un compte à rebour du temps (heure, minute, secondes) restant avant le début ou la fin de la vente, ou "Vente terminée", selon les cas
-	> Conditionner l'accès au bouton d'édition, l'utilisateur doit être authentifié et avoir ajouté le produit, ou être administrateur
-	> Conditionner l'accès au bouton de suppression, l'utilisateur doit être authentifié et avoir ajouté le produit, ou être administrateur
-	
 - Implémenter l'API `DELETE /api/products/:productId`
 	
 - Implémenter la suppression d'un produit depuis la page d'un produit `/products/:productId`
@@ -792,25 +775,13 @@ Voilà une suggestion de roadmap pour développer ce projet.
 	> Permettre de supprimer un produit via `DELETE /api/products/:productId`
 	> Afficher un message en cas d'erreur 404
 	> L'utilisateur est redirigé sur le listing des produits après suppression
-	
-	
-- Implémenter la page de mise à jour des infos d'un produit `/products/:productId/edit`
-	> Pour avoir accès à la page d'édition, l'utilisateur doit être authentifié et avoir ajouté le produit, ou être administrateur
-	> Via `PUT /api/products/:productId`	
-	> Afficher un message en cas d'erreur 404
-	> L'utilisateur est redirigé sur la page du produit 
-	
+  
 
 - Implémenter l'ajout d'une offre d'enchère sur la page d'un produit `/products/:productId`
-	> Pour avoir accès à la proposition d'offre, l'utilisateur ne doit pas être celui qui a ajouté le produit
 	> Afficher un message d'avertissement si l'offre proposée n'est pas plus haute que la plus haute offre courante
 	> Via `POST /api/products/:productId/bids`
 	> Gérer les cas d'erreur
-	
-- Implémenter la suppression d'un offre d'enchère
-	> Pour avoir accès à la suppression d'une offre, l'utilisateur doit être authentifié et avoir ajouté l'offre, ou être administrateur
-	> Via `DELETE /api/bids/:bidId`
-	> Gérer les cas d'erreur
+  
 
 - Implémenter la page de récapitualtif des produits et enchères d'un utilisateur `/users/:userId`
 	> Via `GET /api/users/:userId/products` et `GET /api/users/:userId/bids`

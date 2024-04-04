@@ -11,13 +11,14 @@ const router = useRouter();
 const productId = ref(route.params.productId);
 const product = ref();
 const loading = ref(true);
-const error = ref(false);
+const error = ref(true);
 const isOwner = ref(false);
 const price = ref(0);
 const bids = ref([]);
 const noBids = ref(true);
 const showOffer = ref(false);
 const deleteBtn = ref(false);
+const errorPrice = ref(false);
 
 function verifyShowOffer() {
   const user = product.value.seller;
@@ -70,8 +71,6 @@ async function fetchProduct() {
       loading.value = false;
     }
   } catch (e) {
-    console.error(e);
-    error.value = true;
     loading.value = false;
   }
 }
@@ -93,25 +92,6 @@ async function deleteBids(bidId) {
     error.value = true;
   } finally {
     loading.value = false;
-  }
-}
-
-async function addBid() {
-  try {
-    const res = await fetch(
-      `http://localhost:3000/api/products/${productId.value}/bids`,
-      {
-        method: "POST",
-        body: JSON.stringify({ price: price.value }),
-        headers: {
-          Authorization: `Bearer ${token.value}`,
-          "Content-Type": "application/json",
-        },
-      },
-    );
-    fetchProduct();
-  } catch (e) {
-    error.value = true;
   }
 }
 
@@ -140,6 +120,37 @@ function formatDate(date) {
   const options = { year: "numeric", month: "long", day: "numeric" };
   return new Date(date).toLocaleDateString("fr-FR", options);
 }
+
+async function sendOffer() {
+  let inputOffer = document.getElementById("bidAmount").value;
+  let lastOffer = bids.value[bids.value.length - 1].price;
+  console.log(productId.value);
+  if (inputOffer > 10 && inputOffer > lastOffer) {
+    errorPrice.value = false;
+    const data = {
+      bidAmount: inputOffer,
+      userId: useAuthStore().userData.value.id,
+      productId: productId.value,
+    };
+    try {
+      await fetch(`http://localhost:3000/api/products/:productId/bids`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token.value}`,
+        },
+        body: JSON.stringify(data),
+      });
+      await router.push({
+        name: "Home",
+      });
+    } catch (e) {
+      error.value = true;
+    }
+  } else {
+    errorPrice.value = true;
+  }
+}
 </script>
 
 <template>
@@ -157,6 +168,16 @@ function formatDate(date) {
       data-test-error
     >
       Une erreur est survenue lors du chargement des produits.
+    </div>
+
+    <div
+      class="alert alert-danger mt-4"
+      role="alert"
+      v-if="errorPrice"
+      data-test-error
+    >
+      Le montant doit être supérieur à 10 euros et supérieur à la dernière
+      offre.
     </div>
     <div v-if="product" class="row" data-test-product>
       <!-- Colonne de gauche : image et compte à rebours -->
@@ -187,7 +208,7 @@ function formatDate(date) {
               {{ product.name }}
             </h1>
           </div>
-          <div class="col-lg-6 text-end">
+          <div v-if="deleteBtn" class="col-lg-6 text-end">
             <RouterLink
               :to="{
                 name: 'ProductEdition',
@@ -199,7 +220,11 @@ function formatDate(date) {
               Editer
             </RouterLink>
             &nbsp;
-            <button class="btn btn-danger" data-test-delete-product>
+            <button
+              v-if="deleteBtn"
+              class="btn btn-danger"
+              data-test-delete-product
+            >
               Supprimer
             </button>
           </div>
@@ -268,7 +293,7 @@ function formatDate(date) {
         </table>
         <p v-if="noBids" data-test-no-bids>Aucune offre pour le moment</p>
 
-        <form v-if="showOffer" data-test-bid-form>
+        <form v-if="showOffer" @submit.prevent="sendOffer" data-test-bid-form>
           <div class="form-group">
             <label for="bidAmount">Votre offre :</label>
             <input
@@ -281,12 +306,7 @@ function formatDate(date) {
               Le montant doit être supérieur à 10 €.
             </small>
           </div>
-          <button
-            type="submit"
-            class="btn btn-primary"
-            disabled
-            data-test-submit-bid
-          >
+          <button type="submit" class="btn btn-primary" data-test-submit-bid>
             Enchérir
           </button>
         </form>

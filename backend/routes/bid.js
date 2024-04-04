@@ -26,7 +26,30 @@ router.delete('/api/bids/:bidId', async (req, res) => {
 })
 
 router.post('/api/products/:productId/bids', async (req, res) => {
-  res.status(600).send()
+  try {
+    const bidAmount = req.body.bidAmount
+    const userId = req.body.userId
+    const productId = req.params.productId
+
+    if (!bidAmount || !userId || !productId) {
+      return res.status(400).json({
+        error: 'Missing parameters'
+      })
+    }
+    const bid = await Bid.create({
+      productId,
+      bidderId: userId,
+      price: bidAmount,
+      date: new Date(Date.now())
+    })
+
+    return res.status(201).json({
+      message: 'Bid created successfully',
+      bid
+    })
+  } catch (error) {
+    return res.status(500).json({ error })
+  }
 })
 
 export default router
