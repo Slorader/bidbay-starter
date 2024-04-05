@@ -5,10 +5,9 @@ import { getDetails } from '../validators/index.js'
 
 const router = express.Router()
 
-router.delete('/api/bids/:bidId', async (req, res) => {
+router.delete('/api/bids/:bidId', authMiddleware, async (req, res) => {
   try {
-    const bidId = req.params.bidId
-    const bid = await Bid.findByPk(bidId)
+    const bid = await Bid.findByPk(req.params.bidId)
 
     if (!bid) {
       return res.status(404).json({
@@ -16,12 +15,13 @@ router.delete('/api/bids/:bidId', async (req, res) => {
       })
     }
 
+    if (bid.bidderId !== req.user.id && !req.user.admin) {
+      return res.status(403).json({ message: 'Action non autorisée' })
+    }
     await bid.destroy()
-
-    return res.status(204).send()
-  } catch (error) {
-    console.error(error)
-    return res.status(500).json({ error: 'Internal Server Error' })
+    res.status(204).send()
+  } catch (err) {
+    res.status(401).json({ message: err.message })
   }
 })
 

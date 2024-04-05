@@ -21,10 +21,15 @@ router.get('/api/users/:userId', async (req, res) => {
         id: userId
       }
     })
-    res.status(200).json(user);
+
+    if (!user) {
+      return res.status(404).json({ error: 'Utilisateur non trouvé' })
+    }
+
+    res.status(200).json(user)
   } catch (error) {
-    console.error('Erreur lors de la récupération de l\'utilisateur :', error);
-    res.status(500).json({ error: 'Erreur lors de la récupération de l\'utilisateur' });
+    console.error('Erreur lors de la récupération de l\'utilisateur :', error)
+    res.status(500).json({ error: 'Erreur lors de la récupération de l\'utilisateur' })
   }
 })
 
