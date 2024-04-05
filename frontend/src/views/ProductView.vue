@@ -88,9 +88,7 @@ async function deleteBids(bidId) {
         Authorization: `Bearer ${token.value}`,
       },
     });
-    await router.push({
-      name: "Home",
-    });
+    window.location.reload();
   } catch (e) {
     error.value = true;
   } finally {
@@ -246,7 +244,10 @@ async function sendOffer() {
               Editer
             </RouterLink>
             &nbsp;
-            <button class="btn btn-danger" data-test-delete-product @click.prevent="deleteProduct(product.id)"
+            <button
+              class="btn btn-danger"
+              data-test-delete-product
+              @click.prevent="deleteProduct(product.id)"
               v-if="deleteBtn"
             >
               Supprimer

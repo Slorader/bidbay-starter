@@ -9,7 +9,6 @@ const router = useRouter();
 if (!isAuthenticated.value) {
   router.push({ name: "Login" });
 }
-console.log(token.value);
 const productName = ref("");
 const productDescription = ref("");
 const productPictureUrl = ref("");
@@ -21,7 +20,7 @@ const loading = ref(false);
 const error = ref(false);
 async function addProduct() {
   loading.value = true;
-  try{
+  try {
     let response = await fetch("http://localhost:3000/api/products", {
       method: "POST",
       headers: {
@@ -38,14 +37,13 @@ async function addProduct() {
         endDate: productEndDate.value,
       }),
     });
-    if(response.ok) {
+    if (response.ok) {
       let product = await response.json();
       router.push({ name: "Product", params: { productId: product.id } });
-    } else{
+    } else {
       error.value = true;
     }
-
-  } catch(e){
+  } catch (e) {
     error.value = true;
   } finally {
     loading.value = false;
@@ -60,7 +58,12 @@ async function addProduct() {
   <div class="row justify-content-center">
     <div class="col-md-6">
       <form @submit.prevent="addProduct()">
-        <div v-if="error" class="alert alert-danger mt-4" role="alert" data-test-error>
+        <div
+          v-if="error"
+          class="alert alert-danger mt-4"
+          role="alert"
+          data-test-error
+        >
           Une erreur s'est produite
         </div>
 

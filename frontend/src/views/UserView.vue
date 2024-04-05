@@ -20,16 +20,16 @@ async function fetchUser() {
   error.value = false;
   loading.value = true;
 
-  if(!isAuthenticated.value) {
+  if (!isAuthenticated.value) {
     await router.push({
       name: "Home",
     });
   }
 
-  if(isAuthenticated.value && userId.value === "me") {
+  if (isAuthenticated.value && userId.value === "me") {
     user_id.value = userData.value.id;
-  } else if(isAuthenticated.value && userId.value !== "me") {
-    user_id.value = userId.value
+  } else if (isAuthenticated.value && userId.value !== "me") {
+    user_id.value = userId.value;
   } else {
     await router.push({
       name: "Home",
@@ -38,9 +38,9 @@ async function fetchUser() {
 
   try {
     const user_request = await fetch(
-        `http://localhost:3000/api/users/${user_id.value}`,
+      `http://localhost:3000/api/users/${user_id.value}`,
     );
-    if (user_request.ok ) {
+    if (user_request.ok) {
       user.value = await user_request.json();
       loading.value = false;
       error.value = false;
@@ -71,11 +71,12 @@ const formatDate = (date) => {
 <template>
   <div>
     <h1 class="text-center" v-if="user" data-test-username>
-      Utilisateur  {{ user.username }}
+      Utilisateur {{ user.username }}
       <span
         v-if="user.admin"
-          class="badge rounded-pill bg-primary"
-          data-test-admin>Admin
+        class="badge rounded-pill bg-primary"
+        data-test-admin
+        >Admin
       </span>
     </h1>
     <div v-if="loading" class="text-center" data-test-loading>
@@ -111,7 +112,7 @@ const formatDate = (date) => {
                     <RouterLink
                       :to="{
                         name: 'Product',
-                        params: { productId: 'TODO' },
+                        params: { productId: product.id },
                       }"
                       data-test-product-name
                     >
@@ -141,9 +142,10 @@ const formatDate = (date) => {
             </thead>
             <tbody>
               <tr
-                  v-for="bid in user ? user.bids : null"
-                  :key="bid.id"
-                  data-test-bid>
+                v-for="bid in user ? user.bids : null"
+                :key="bid.id"
+                data-test-bid
+              >
                 <td>
                   <RouterLink
                     :to="{

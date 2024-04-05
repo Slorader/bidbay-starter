@@ -17,7 +17,6 @@ async function fetchProducts() {
       throw new Error("Erreur lors de la récupération des produits");
     }
     const productsData = await response.json();
-    console.log(productsData);
     products.value = productsData;
   } catch (e) {
     console.error("Erreur lors de la récupération des produits:", e);
