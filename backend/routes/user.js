@@ -14,7 +14,8 @@ router.get('/api/users/:userId', async (req, res) => {
         },
         {
           model: Bid,
-          as: 'bids'
+          as: 'bids',
+          include: 'product'
         }
       ],
       where: {
@@ -32,5 +33,4 @@ router.get('/api/users/:userId', async (req, res) => {
     res.status(500).json({ error: 'Erreur lors de la récupération de l\'utilisateur' })
   }
 })
-
 export default router
