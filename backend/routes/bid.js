@@ -7,7 +7,7 @@ const router = express.Router()
 
 router.delete('/api/bids/:bidId', async (req, res) => {
   try {
-    const bidId = req.params.bidId // Utilisez le bon paramètre de l'URL
+    const bidId = req.params.bidId
     const bid = await Bid.findByPk(bidId)
 
     if (!bid) {
@@ -25,17 +25,16 @@ router.delete('/api/bids/:bidId', async (req, res) => {
   }
 })
 
-router.post('/api/products/:productId/bids', async (req, res) => {
+router.post('/api/products/:productId/bids', authMiddleware, async (req, res) => {
   try {
     const bidAmount = req.body.bidAmount
     const userId = req.body.userId
-    const productId = req.params.productId
+    const productId = req.body.productId
 
     if (!bidAmount || !userId || !productId) {
-      return res.status(400).json({
-        error: 'Missing parameters'
-      })
+      return res.status(400).json({ error: 'Missing parameters' })
     }
+
     const bid = await Bid.create({
       productId,
       bidderId: userId,
@@ -43,12 +42,10 @@ router.post('/api/products/:productId/bids', async (req, res) => {
       date: new Date(Date.now())
     })
 
-    return res.status(201).json({
-      message: 'Bid created successfully',
-      bid
-    })
+    return res.status(201).json({ bidAmount, userId, productId })
   } catch (error) {
-    return res.status(500).json({ error })
+    console.error(error)
+    return res.status(400).json({ error: 'An error occurred' })
   }
 })
 

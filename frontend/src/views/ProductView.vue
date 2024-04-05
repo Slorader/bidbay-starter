@@ -123,8 +123,13 @@ function formatDate(date) {
 
 async function sendOffer() {
   let inputOffer = document.getElementById("bidAmount").value;
-  let lastOffer = bids.value[bids.value.length - 1].price;
-  console.log(productId.value);
+  let lastOffer;
+  if (bids.value.length > 0) {
+    lastOffer = bids.value[bids.value.length - 1].price;
+  } else {
+    lastOffer = product.value.originalPrice;
+  }
+
   if (inputOffer > 10 && inputOffer > lastOffer) {
     errorPrice.value = false;
     const data = {
@@ -141,9 +146,7 @@ async function sendOffer() {
         },
         body: JSON.stringify(data),
       });
-      await router.push({
-        name: "Home",
-      });
+      window.location.reload();
     } catch (e) {
       error.value = true;
     }
