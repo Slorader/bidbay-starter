@@ -26,13 +26,14 @@ router.delete('/api/bids/:bidId', authMiddleware, async (req, res) => {
 })
 
 router.post('/api/products/:productId/bids', authMiddleware, async (req, res) => {
+  console.log('JKDHVQVF')
   try {
-    const bidAmount = req.body.bidAmount
-    const userId = req.body.userId
-    const productId = req.body.productId
+    const bidAmount = req.body.price
+    const userId = req.user.id
+    const productId = req.params.productId
 
     if (!bidAmount || !userId || !productId) {
-      return res.status(400).json({ error: 'Missing parameters' })
+      return res.status(400).json({ error: 'Invalid or missing fields', details: 'Some fields are missing or invalid' })
     }
 
     const bid = await Bid.create({
@@ -42,7 +43,7 @@ router.post('/api/products/:productId/bids', authMiddleware, async (req, res) =>
       date: new Date(Date.now())
     })
 
-    return res.status(201).json({ bidAmount, userId, productId })
+    return res.status(201).json(bid)
   } catch (error) {
     console.error(error)
     return res.status(400).json({ error: 'An error occurred' })

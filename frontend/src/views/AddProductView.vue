@@ -157,7 +157,7 @@ async function addProduct() {
         </div>
 
         <div class="d-grid gap-2">
-          <button type="submit" class="btn btn-primary" data-test-submit>
+          <button type="submit" class="btn btn-primary" data-test-submit :disabled="loading">
             Ajouter le produit
             <span
               data-test-spinner
