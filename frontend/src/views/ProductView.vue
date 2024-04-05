@@ -11,7 +11,7 @@ const router = useRouter();
 const productId = ref(route.params.productId);
 const product = ref();
 const loading = ref(true);
-const error = ref(true);
+const error = ref(false);
 const isOwner = ref(false);
 const price = ref(0);
 const bids = ref([]);
@@ -65,12 +65,15 @@ async function fetchProduct() {
       }
     } else if (response.status === 404) {
       error.value = true;
+      errorMessage.value = "Product not found";
       loading.value = false;
     } else {
       error.value = true;
       loading.value = false;
     }
   } catch (e) {
+    console.error(e);
+    error.value = true;
     loading.value = false;
   }
 }
@@ -80,6 +83,26 @@ async function deleteBids(bidId) {
   loading.value = true;
   try {
     await fetch(`http://localhost:3000/api/bids/${bidId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token.value}`,
+      },
+    });
+    await router.push({
+      name: "Home",
+    });
+  } catch (e) {
+    error.value = true;
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function deleteProduct(productId) {
+  error.value = false;
+  loading.value = true;
+  try {
+    await fetch(`http://localhost:3000/api/products/${productId}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${token.value}`,
@@ -158,7 +181,7 @@ async function sendOffer() {
 
 <template>
   <div class="row">
-    <div class="text-center mt-4" v-if="loading" data-test-loading>
+    <div v-if="loading" class="text-center mt-4" data-test-loading>
       <div class="spinner-border" role="status">
         <span class="visually-hidden">Chargement...</span>
       </div>
@@ -223,10 +246,8 @@ async function sendOffer() {
               Editer
             </RouterLink>
             &nbsp;
-            <button
+            <button class="btn btn-danger" data-test-delete-product @click.prevent="deleteProduct(product.id)"
               v-if="deleteBtn"
-              class="btn btn-danger"
-              data-test-delete-product
             >
               Supprimer
             </button>

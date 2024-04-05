@@ -12,8 +12,53 @@ const route = useRoute();
 const user = ref(null);
 const loading = ref(false);
 const error = ref(null);
+const user_id = ref(null);
 
 let userId = computed(() => route.params.userId);
+
+async function fetchUser() {
+  error.value = false;
+  loading.value = true;
+
+  if(!isAuthenticated.value) {
+    await router.push({
+      name: "Home",
+    });
+  }
+
+  if(isAuthenticated.value && userId.value === "me") {
+    user_id.value = userData.value.id;
+  } else if(isAuthenticated.value && userId.value !== "me") {
+    user_id.value = userId.value
+  } else {
+    await router.push({
+      name: "Home",
+    });
+  }
+
+  try {
+    const user_request = await fetch(
+        `http://localhost:3000/api/users/${user_id.value}`,
+    );
+    if (user_request.ok ) {
+      user.value = await user_request.json();
+      loading.value = false;
+      error.value = false;
+    } else if (user_request.status === 404) {
+      error.value = true;
+      loading.value = false;
+    } else {
+      error.value = true;
+      loading.value = false;
+    }
+  } catch (e) {
+    console.error(e);
+    error.value = true;
+    loading.value = false;
+  }
+}
+
+fetchUser();
 
 /**
  * @param {Date} date
@@ -25,15 +70,19 @@ const formatDate = (date) => {
 
 <template>
   <div>
-    <h1 class="text-center" data-test-username>
-      Utilisateur charly
-      <span class="badge rounded-pill bg-primary" data-test-admin>Admin</span>
+    <h1 class="text-center" v-if="user" data-test-username>
+      Utilisateur  {{ user.username }}
+      <span
+        v-if="user.admin"
+          class="badge rounded-pill bg-primary"
+          data-test-admin>Admin
+      </span>
     </h1>
-    <div class="text-center" data-test-loading>
+    <div v-if="loading" class="text-center" data-test-loading>
       <span class="spinner-border"></span>
       <span>Chargement en cours...</span>
     </div>
-    <div class="alert alert-danger mt-3" data-test-error>
+    <div v-if="error" class="alert alert-danger mt-3" data-test-error>
       Une erreur est survenue
     </div>
     <div data-test-view>
@@ -43,16 +92,16 @@ const formatDate = (date) => {
           <div class="row">
             <div
               class="col-md-6 mb-6 py-2"
-              v-for="i in 10"
-              :key="i"
+              v-for="product in user ? user.products : null"
+              :key="product.id"
               data-test-product
             >
               <div class="card">
                 <RouterLink
-                  :to="{ name: 'Product', params: { productId: 'TODO' } }"
+                  :to="{ name: 'Product', params: { productId: product.id } }"
                 >
                   <img
-                    src="https://image.noelshack.com/fichiers/2023/12/4/1679526253-65535-51925549650-96f088a093-b-512-512-nofilter.jpg"
+                    :src="product.pictureUrl"
                     class="card-img-top"
                     data-test-product-picture
                   />
@@ -66,16 +115,14 @@ const formatDate = (date) => {
                       }"
                       data-test-product-name
                     >
-                      Chapeau en poil de chameau
+                      {{ product.name }}
                     </RouterLink>
                   </h5>
                   <p class="card-text" data-test-product-description>
-                    Ce chapeau en poil de chameau est un véritable chef-d'œuvre
-                    artisanal, doux au toucher et résistant pour une durabilité
-                    à long terme.
+                    {{ product.description }}
                   </p>
                   <p class="card-text" data-test-product-price>
-                    Prix de départ : 23 €
+                    Prix de départ : {{ product.originalPrice }} €
                   </p>
                 </div>
               </div>
@@ -93,19 +140,22 @@ const formatDate = (date) => {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="i in 10" :key="i" data-test-bid>
+              <tr
+                  v-for="bid in user ? user.bids : null"
+                  :key="bid.id"
+                  data-test-bid>
                 <td>
                   <RouterLink
                     :to="{
                       name: 'Product',
-                      params: { productId: 'TODO' },
+                      params: { productId: bid.productId },
                     }"
                     data-test-bid-product
                   >
                     Théière design
                   </RouterLink>
                 </td>
-                <td data-test-bid-price>713 €</td>
+                <td data-test-bid-price>{{ bid.price }} €</td>
                 <td data-test-bid-date>{{ formatDate(new Date()) }}</td>
               </tr>
             </tbody>

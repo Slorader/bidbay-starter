@@ -48,8 +48,27 @@ router.get('/api/products/:productId', async (req, res) => {
 
 // You can use the authMiddleware with req.user.id to authenticate your endpoint ;)
 
-router.post('/api/products', (req, res) => {
-  res.status(600).send()
+router.post('/api/products', authMiddleware, async (req, res) => {
+  const { name, description, pictureUrl, category, originalPrice, endDate } = req.body;
+
+  try {
+    let product = await Product.create({
+      name,
+      description,
+      pictureUrl,
+      category,
+      originalPrice,
+      endDate,
+      sellerId: req.user.id
+    })
+
+    res.status(201).json(product)
+  } catch (e) {
+    res.status(400).json({
+      'error': 'Invalid or missing fields',
+      'details': getDetails(e)
+    })
+  }
 })
 
 router.put('/api/products/:productId', authMiddleware, async (req, res) => {
@@ -95,8 +114,32 @@ router.put('/api/products/:productId', authMiddleware, async (req, res) => {
   }
 })
 
-router.delete('/api/products/:productId', async (req, res) => {
-  res.status(600).send()
+router.delete('/api/products/:productId', authMiddleware, async (req, res) => {
+  try {
+    const productId = req.params.productId
+    const product = await Product.findByPk(productId)
+
+    if (!product) {
+      res.status(404).json({
+        error: 'Product not found'
+      })
+      return
+    }
+
+    if ((product.sellerId !== req.user.id) && !req.user.admin) {
+      res.status(403).json({
+        error: 'User not granted'
+      })
+      return
+    }
+
+    await product.destroy()
+
+    return res.status(204).send()
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: 'Internal Server Error' })
+  }
 })
 
 export default router
