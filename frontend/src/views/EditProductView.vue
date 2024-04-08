@@ -22,6 +22,40 @@ const disabled = ref(true);
 if (!isAuthenticated.value) {
   router.push({ name: "Login" });
 }
+async function updateProduct(productId) {
+  try {
+    const response = await fetch(
+      `http://localhost:3000/api/products/${productId}`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token.value}`,
+          "Content-Type": "application/json",
+          accept: "application/json",
+        },
+        body: JSON.stringify({
+          name: productName.value,
+          description: productDescription.value,
+          pictureUrl: productPictureUrl.value,
+          category: productCategory.value,
+          originalPrice: productOriginalPrice.value,
+          endDate: productEndDate.value,
+        }),
+      },
+    );
+    if (!response.ok) {
+      throw new Error("Erreur lors de la mise à jour du produit");
+    }
+    const updatedProduct = await response.json();
+    // Mettez à jour le produit si nécessaire
+    product.value = updatedProduct;
+  } catch (error) {
+    console.error("Erreur lors de la mise à jour du produit :", error);
+    error.value = true;
+  } finally {
+    loading.value = false;
+  }
+}
 
 const productId = ref(route.params.productId);
 
@@ -211,7 +245,7 @@ function verifyOwner() {
             type="submit"
             class="btn btn-primary"
             data-test-submit
-            :disabled="disabled"
+            :disabled="disabled || loading"
             @click="updateProduct(productId)"
           >
             Modifier le produit
