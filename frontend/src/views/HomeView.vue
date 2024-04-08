@@ -4,8 +4,8 @@ import { ref, computed } from "vue";
 const loading = ref(false);
 const error = ref(false);
 const products = ref([]);
-const searchTerm = ref("");
-const sortBy = ref("name");
+let searchQuery = ref("");
+let sortOption = ref("nom");
 
 async function fetchProducts() {
   loading.value = true;
@@ -16,8 +16,11 @@ async function fetchProducts() {
     if (!response.ok) {
       throw new Error("Erreur lors de la récupération des produits");
     }
-    const productsData = await response.json();
-    products.value = productsData;
+    const data = await response.json();
+    if (!Array.isArray(data)) {
+      throw new Error("Data received is not an array");
+    }
+    products.value = data;
   } catch (e) {
     console.error("Erreur lors de la récupération des produits:", e);
     error.value = true;
@@ -27,19 +30,33 @@ async function fetchProducts() {
 }
 fetchProducts();
 
-const filteredProducts = computed(() => {
-  return products.value.filter((product) => {
-    return product.name.toLowerCase().includes(searchTerm.value.toLowerCase());
-  });
-});
-
-const sortProducts = () => {
-  if (sortBy.value === "name") {
-    products.value.sort((a, b) => a.name.localeCompare(b.name));
-  } else if (sortBy.value === "price") {
-    products.value.sort((a, b) => a.originalPrice - b.originalPrice);
+const searchedProducts = computed(() => {
+  let sortedProducts = [...products.value];
+  if (sortOption.value === "nom") {
+    sortedProducts.sort((a, b) =>
+      a.name.localeCompare(b.name, "fr", { ignorePunctuation: true }),
+    ); // sort by name using localeCompare to handle accents and special characters
+  } else if (sortOption.value === "prix") {
+    sortedProducts.sort((a, b) => {
+      const aPrice =
+        new Date(a.endDate) > new Date()
+          ? a.originalPrice
+          : a.bids.length
+            ? a.bids[a.bids.length - 1].price
+            : a.originalPrice;
+      const bPrice =
+        new Date(b.endDate) > new Date()
+          ? b.originalPrice
+          : b.bids.length
+            ? b.bids[b.bids.length - 1].price
+            : b.originalPrice;
+      return aPrice - bPrice;
+    });
   }
-};
+  return sortedProducts.filter((product) =>
+    product.name.toLowerCase().includes(searchQuery.value.toLowerCase()),
+  );
+});
 </script>
 
 <template>
@@ -48,7 +65,7 @@ const sortProducts = () => {
 
     <div class="row mb-3">
       <div class="col-md-6">
-        <form @submit.prevent="searchProduct">
+        <form>
           <div class="input-group">
             <span class="input-group-text">Filtrage</span>
             <input
@@ -56,7 +73,7 @@ const sortProducts = () => {
               class="form-control"
               placeholder="Filtrer par nom"
               data-test-filter
-              v-model="searchTerm"
+              v-model="searchQuery"
             />
           </div>
         </form>
@@ -70,18 +87,11 @@ const sortProducts = () => {
             aria-expanded="false"
             data-test-sorter
           >
-            Trier par {{ sortBy === "name" ? "nom" : "prix" }}
+            Trier par {{ sortOption }}
           </button>
           <ul class="dropdown-menu dropdown-menu-end">
             <li>
-              <a
-                class="dropdown-item"
-                href="#"
-                @click="
-                  sortBy = 'name';
-                  sortProducts();
-                "
-              >
+              <a class="dropdown-item" href="#" @click="sortOption = 'nom'">
                 Nom
               </a>
             </li>
@@ -89,10 +99,8 @@ const sortProducts = () => {
               <a
                 class="dropdown-item"
                 href="#"
-                @click="
-                  sortBy = 'price';
-                  sortProducts();
-                "
+                @click="sortOption = 'prix'"
+                data-test-sorter-price
               >
                 Prix
               </a>
@@ -120,7 +128,7 @@ const sortProducts = () => {
     <div class="row">
       <div
         class="col-md-4 mb-4"
-        v-for="product in filteredProducts"
+        v-for="product in searchedProducts"
         :key="product.id"
         data-test-product
       >
