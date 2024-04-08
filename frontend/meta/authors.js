@@ -5,4 +5,4 @@ export const authors = [
 ];
 
 // Groupe
-export const group = 3;
+export const group = 9;
