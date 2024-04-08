@@ -1,83 +1,68 @@
 <script setup>
-import { ref, computed } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { ref } from "vue";
 
-import { useAuthStore } from "../store/auth";
+import { useAuthStore } from "@/store/auth";
 
 const { isAuthenticated, userData } = useAuthStore();
 
-const router = useRouter();
-const route = useRoute();
-
 const user = ref(null);
 const loading = ref(false);
-const error = ref(null);
-const user_id = ref(null);
+const error = ref(false);
 
-let userId = computed(() => route.params.userId);
-
-async function fetchUser() {
-  error.value = false;
+async function fetchUser(idUser) {
   loading.value = true;
-
-  if (!isAuthenticated.value) {
-    await router.push({
-      name: "Home",
-    });
-  }
-
-  if (isAuthenticated.value && userId.value === "me") {
-    user_id.value = userData.value.id;
-  } else if (isAuthenticated.value && userId.value !== "me") {
-    user_id.value = userId.value;
+  error.value = false;
+  let str;
+  if (idUser === "me") {
+    str = "http://localhost:3000/api/users/" + userData.value.id;
   } else {
-    await router.push({
-      name: "Home",
-    });
+    str = "http://localhost:3000/api/users/" + idUser;
   }
 
   try {
-    const user_request = await fetch(
-      `http://localhost:3000/api/users/${user_id.value}`,
-    );
-    if (user_request.ok) {
-      user.value = await user_request.json();
-      loading.value = false;
-      error.value = false;
-    } else if (user_request.status === 404) {
-      error.value = true;
-      loading.value = false;
-    } else {
-      error.value = true;
-      loading.value = false;
-    }
+    const response = await fetch(str);
+    user.value = await response.json();
+    loading.value = false;
   } catch (e) {
-    console.error(e);
     error.value = true;
+    console.log(e);
+  } finally {
     loading.value = false;
   }
 }
 
-fetchUser();
+if (!isAuthenticated || userData == null) {
+  window.location.href = "LoginView.vue";
+}
 
-/**
- * @param {Date} date
- */
-const formatDate = (date) => {
-  return new Date(date).toLocaleDateString();
-};
+if (window.location.href.startsWith("http://localhost:5173/users/")) {
+  let userId;
+  if (window.location.href.includes("me")) {
+    fetchUser("me");
+  } else {
+    // Action pour l'utilisateur avec l'identifiant récupéré depuis l'URL
+    const regex = /http:\/\/localhost:5173\/users\/(.+)/;
+    const match = window.location.href.match(regex);
+    if (match && match.length > 1) {
+      userId = match[1];
+    }
+    fetchUser(userId);
+  }
+}
+
+console.log("test");
 </script>
 
 <template>
   <div>
-    <h1 class="text-center" v-if="user" data-test-username>
-      Utilisateur {{ user.username }}
+    <h1 class="text-center" data-test-username>
+      Utilisateur {{ user ? user.username : "" }}
       <span
-        v-if="user.admin"
+        v-if="user ? user.admin : ''"
         class="badge rounded-pill bg-primary"
         data-test-admin
-        >Admin
-      </span>
+        >Admin</span
+      >
     </h1>
     <div v-if="loading" class="text-center" data-test-loading>
       <span class="spinner-border"></span>
@@ -86,7 +71,7 @@ const formatDate = (date) => {
     <div v-if="error" class="alert alert-danger mt-3" data-test-error>
       Une erreur est survenue
     </div>
-    <div data-test-view>
+    <div v-if="!loading && !error" data-test-view>
       <div class="row">
         <div class="col-lg-6">
           <h2>Produits</h2>
@@ -105,6 +90,7 @@ const formatDate = (date) => {
                     :src="product.pictureUrl"
                     class="card-img-top"
                     data-test-product-picture
+                    alt="Image non trouvée"
                   />
                 </RouterLink>
                 <div class="card-body">
@@ -150,15 +136,15 @@ const formatDate = (date) => {
                   <RouterLink
                     :to="{
                       name: 'Product',
-                      params: { productId: bid.productId },
+                      params: { productId: bid.product.id },
                     }"
                     data-test-bid-product
                   >
-                    Théière design
+                    {{ bid.product.name }}
                   </RouterLink>
                 </td>
                 <td data-test-bid-price>{{ bid.price }} €</td>
-                <td data-test-bid-date>{{ formatDate(new Date()) }}</td>
+                <td data-test-bid-date>{{ bid.date }}</td>
               </tr>
             </tbody>
           </table>
